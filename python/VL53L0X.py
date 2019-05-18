@@ -81,16 +81,25 @@ tof_lib.VL53L0X_set_i2c(read_func, write_func)
 class VL53L0X(object):
     """VL53L0X ToF."""
 
-    object_number = 0
+    used_object_numbers = []
 
     def __init__(self, address=0x29, TCA9548A_Num=255, TCA9548A_Addr=0, **kwargs):
         """Initialize the VL53L0X ToF Sensor from ST"""
         self.device_address = address
         self.TCA9548A_Device = TCA9548A_Num
         self.TCA9548A_Address = TCA9548A_Addr
-        self.my_object_number = VL53L0X.object_number
-        VL53L0X.object_number += 1
+        self.my_object_number = self._get_object_number()
+        
+    def _get_object_number(self):
+        for i in range(16):
+            if i not in VL53L0X.used_object_numbers:
+                VL53L0X.used_object_numbers.append(i)
+                return i
+        raise Exception("Could not assign a object_number")
 
+    def __del__(self):
+        VL53L0X.used_object_numbers.remove(self.my_object_number)
+        
     def start_ranging(self, mode = VL53L0X_GOOD_ACCURACY_MODE):
         """Start VL53L0X ToF Sensor Ranging"""
         tof_lib.startRanging(self.my_object_number, mode, self.device_address, self.TCA9548A_Device, self.TCA9548A_Address)
